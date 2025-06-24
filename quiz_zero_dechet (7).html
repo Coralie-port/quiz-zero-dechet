@@ -26,12 +26,14 @@
 
   <script>
     const firebaseConfig = {
-      apiKey: "AIzaSyBTBSs46GOtnkMS27QEnAsGrrzzaxQFT4Y",
-      authDomain: "quizz-ecologie.firebaseapp.com",
-      projectId: "quizz-ecologie",
-      storageBucket: "quizz-ecologie.firebasestorage.app",
-      messagingSenderId: "610967439818",
-      appId: "1:610967439818:web:367f3c89e35e42e6cae733"
+  apiKey: "AIzaSyBTBSs46GOtnkMS27QEnAsGrrzzaxQFT4Y",
+  authDomain: "quizz-ecologie.firebaseapp.com",
+  databaseURL: "https://quizz-ecologie-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "quizz-ecologie",
+  storageBucket: "quizz-ecologie.appspot.com",
+  messagingSenderId: "610967439818",
+  appId: "1:610967439818:web:367f3c89e35e42e6cae733"
+};
     };
       firebase.initializeApp(firebaseConfig);
       const db = firebase.database();
