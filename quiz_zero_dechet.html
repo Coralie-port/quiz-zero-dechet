@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz Zéro Déchet</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+</head>
+<body class="bg-green-50 font-sans">
+  <div class="max-w-2xl mx-auto p-4">
+    <h1 class="text-3xl font-bold text-center mb-6">🌍 Quiz Zéro Déchet</h1>
+    <div id="quiz" class="space-y-6"></div>
+    <button id="submit" class="mt-6 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Soumettre</button>
+    <div id="result" class="mt-6 text-lg font-medium"></div>
+    <form id="scoreForm" class="hidden mt-6 space-y-2">
+      <input type="text" id="username" placeholder="Ton prénom" class="border p-2 w-full">
+      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Enregistrer mon score</button>
+    </form>
+    <div id="leaderboard" class="mt-8">
+      <h2 class="text-2xl font-bold mb-4">🏆 Classement</h2>
+      <ol id="scoresList" class="list-decimal pl-6 space-y-1"></ol>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+  apiKey: "AIzaSyBTBSs46GOtnkMS27QEnAsGrrzzaxQFT4Y",
+  authDomain: "quizz-ecologie.firebaseapp.com",
+  databaseURL: "https://quizz-ecologie-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "quizz-ecologie",
+  storageBucket: "quizz-ecologie.appspot.com",
+  messagingSenderId: "610967439818",
+  appId: "1:610967439818:web:367f3c89e35e42e6cae733"
+};
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.database();
+
+    const questions = [
+      {
+        question: "Quel objet remplace le film plastique dans une cuisine zéro déchet ?",
+        options: ["Papier aluminium", "Bee wrap", "Cellophane recyclée", "Papier cuisson"],
+        answer: 1
+      },
+      {
+        question: "Quel pourcentage d’énergie économise-t-on lorsqu’on recouvre une casserole d’eau bouillante ?",
+        options: ["10%", "20%", "50%" , "70%"],
+        answer: 3
+      },
+      { question: "Quel produit naturel peut remplacer plusieurs produits ménagers ?", options: ["Eau de javel", "Bicarbonate de soude", "Liquide vaisselle", "Savon noir"], answer: 1 },
+      { question: "Quel déchet peut aller dans un compost domestique ?", options: ["Capsule de café en plastique", "Sac plastique", "Coquille d'œuf", "Canette"], answer: 2 },
+      { question: "Quel est le meilleur choix d'emballage ?", options: ["Emballage plastique recyclable", "Carton jetable", "Aucun emballage (vrac)", "Emballage biodégradable"], answer: 2 },
+      { question: "Quel geste est le plus éco-responsable ?", options: ["Recycler tout", "Utiliser du jetable biodégradable", "Réutiliser ce qu'on a déjà", "Acheter bio en supermarché"], answer: 2 },
+      { question: "Quelle est la durée de dégradation d’un sac plastique ?", options: ["1 an", "5 ans", "100 ans", "450 ans"], answer: 3 },
+      { question: "A votre avis, à chaque fois qu’on tire la chasse, combien de litres d’eau potable sont consommés ?", options: ["Environ 4 litres","Environ 6 litres", "Environ 8 litres", "Environ 12 litres"], answer: 3 },
+      { question: "le C02, ou gaz à effet de serre, a une durée de vie d’environ 100 ans dans l’atmosphère. Savez-vous quel secteur produit le plus de gaz à effet de serre en France ?", options: ["Les transports", "Le chauffage des logements", "L'industrie", "Les pets de vaches"], answer: 0 },
+      { question: "Que faire des vêtements usagés ?", options: ["Les jeter", "Les brûler", "Les recycler ou donner", "Les composter"], answer: 2 },
+      { question: "En hiver et à quantité égale, lequel de ces produits émet le plus de CO2 ?", options: ["La banane de Martinique", "Les tomates d'Espagne", "Le rutabaga picard", "Le café colombien"], answer: 1 },
+      { question: "Combien de kilos d’aliments gaspille chaque personne en moyenne chaque année ?", options: ["10 kilos", "30 kilos", "60 kilos", "100 kilos"], answer: 1 },
+      { question: "D'après la réglementation française, lequel de ces objets ne doit pas aller dans la poubelle jaune de recyclage ?", options: ["Aérosols", "Journaux et Magazines", "Bidons de lessives", "Essuie-tout usagé"], answer: 3 },
+      { question: "Les emails sont beaucoup plus écologiques que le courrier papier. Vrai ou faux ?", options: ["Vrai", "Faux"], answer: 1 },
+      { question: "Quelle est une habitude zéro déchet au bureau ?", options: ["Utiliser des post-its", "Boire dans un gobelet jetable", "Utiliser une gourde", "Imprimer des documents"], answer: 2 }
+    ];
+
+    const quiz = document.getElementById('quiz');
+    questions.forEach((q, index) => {
+      const div = document.createElement('div');
+      div.innerHTML = `<p class="font-semibold">${index + 1}. ${q.question}</p>` +
+        q.options.map((opt, i) => `
+          <label class="block">
+            <input type="radio" name="q${index}" value="${i}" class="mr-2">${opt}
+          </label>`).join('') +
+        `<p class="feedback mt-2 text-sm font-medium"></p>`;
+      quiz.appendChild(div);
+    });
+
+    document.getElementById('submit').addEventListener('click', () => {
+      let score = 0;
+      questions.forEach((q, i) => {
+        const radios = document.querySelectorAll(`input[name="q${i}"]`);
+        const selected = document.querySelector(`input[name="q${i}"]:checked`);
+        const feedback = document.querySelectorAll(".feedback")[i];
+
+        radios.forEach(r => r.disabled = true);
+
+        if (selected) {
+          const selectedIndex = parseInt(selected.value);
+          if (selectedIndex === q.answer) {
+            score++;
+            feedback.textContent = "✅ Correct !";
+            feedback.classList.add("text-green-600");
+          } else {
+            feedback.textContent = `❌ Faux. La bonne réponse était : ${q.options[q.answer]}`;
+            feedback.classList.add("text-red-600");
+          }
+        } else {
+          feedback.textContent = `⚠️ Aucune réponse sélectionnée. La bonne réponse était : ${q.options[q.answer]}`;
+          feedback.classList.add("text-yellow-600");
+        }
+      });
+
+      document.getElementById('result').textContent = `Tu as ${score} bonne(s) réponse(s) sur ${questions.length}.`;
+      document.getElementById('scoreForm').classList.remove('hidden');
+
+      document.getElementById('scoreForm').onsubmit = e => {
+        e.preventDefault();
+        const name = document.getElementById('username').value;
+        if (name) {
+          db.ref('scores').push({ name, score });
+          alert("Score enregistré !");
+          renderScores();
+        }
+      };
+    });
+
+    function renderScores() {
+      const list = document.getElementById('scoresList');
+      list.innerHTML = '';
+      db.ref('scores').orderByChild('score').limitToLast(10).once('value', snapshot => {
+        const scores = [];
+        snapshot.forEach(child => {
+          scores.push(child.val());
+        });
+        scores.reverse();
+        scores.forEach(s => {
+          const li = document.createElement('li');
+          li.textContent = `${s.name} - ${s.score}/${questions.length}`;
+          list.appendChild(li);
+        });
+      });
+    }
+
+    renderScores();
+  </script>
+</body>
+</html>
